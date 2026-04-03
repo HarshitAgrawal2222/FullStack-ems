@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { dummyEmployeeData, DEPARTMENTS } from "../assets/assets";
-import { Plus, Search, X } from "lucide-react"; // ✅ added X
+import { Plus, Search, X } from "lucide-react";
 import EmployeesCard from "../components/EmployeesCard";
+import EmployeeForm from "../components/EmployeeForm";
 
 const Employees = () => {
   const [employees, setEmployees] = useState([]);
@@ -9,7 +10,6 @@ const Employees = () => {
   const [search, setSearch] = useState("");
   const [selectedDept, setSelectedDept] = useState("");
 
-  // ✅ fixed state types
   const [editEmployee, setEditEmployee] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -50,9 +50,11 @@ const Employees = () => {
           </p>
         </div>
 
-        {/* ✅ fixed button */}
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            setEditEmployee(null); // ✅ ensure create mode
+            setShowCreateModal(true);
+          }}
           className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
         >
           <Plus size={16} /> Add Employee
@@ -102,14 +104,17 @@ const Employees = () => {
                 key={emp.id}
                 employee={emp}
                 onDelete={fetchEmployees}
-                onEdit={(e) => setEditEmployee(e)}
+                onEdit={(e) => {
+                  setEditEmployee(e);          // ✅ set data
+                  setShowCreateModal(true);    // ✅ open modal
+                }}
               />
             ))
           )}
         </div>
       )}
 
-      {/* Create Employee Modal */}
+      {/* Single Modal (Create + Edit) */}
       {showCreateModal && (
         <div
           className="fixed bg-black/40 backdrop-blur-sm inset-0 z-50 flex items-start justify-center p-4 overflow-y-auto"
@@ -125,26 +130,40 @@ const Employees = () => {
             <div className="flex items-center justify-between p-6 pb-0">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Add New Employee
+                  {editEmployee ? "Edit Employee" : "Add New Employee"}
                 </h2>
                 <p className="text-sm text-slate-500 mt-0.5">
-                  Create a user account and employee profile
+                  {editEmployee
+                    ? "Update employee details"
+                    : "Create a user account and employee profile"}
                 </p>
               </div>
 
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setEditEmployee(null);
+                }}
                 className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Form Section */}
+            {/* Form */}
             <div className="p-6">
-              <form>
-                {/* form fields here */}
-              </form>
+              <EmployeeForm
+                initialData={editEmployee}
+                onSuccess={() => {
+                  setEditEmployee(null);
+                  setShowCreateModal(false);
+                  fetchEmployees();
+                }}
+                onCancel={() => {
+                  setEditEmployee(null);
+                  setShowCreateModal(false);
+                }}
+              />
             </div>
           </div>
         </div>
