@@ -1,71 +1,83 @@
-import React from 'react'
 
-const PayslipList = ({payslips,isAdmin}) => {
+import React, { useState } from "react";
+import { format } from "date-fns";
+import { Loader2, Check, X, Download } from "lucide-react";
+
+const PayslipList = ({ isAdmin,payslips=[] }) => {
+ 
   return (
-    <div className="card overflow-hidden ">
-
-    {/* Header */}
-    <div className="px-6 py-4 border-b">
-      <h3 className="font-semibold text-lg">Leave History</h3>
-    </div>
-
-    {/* Table */}
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-
-        <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
-          <tr>
-            <th className="px-6 py-3 text-left">Employee</th>
-            <th className="px-6 py-3 text-left">Type</th>
-            <th className="px-6 py-3 text-left">From</th>
-            <th className="px-6 py-3 text-left">To</th>
-            <th className="px-6 py-3 text-left">Status</th>
-          </tr>
-        </thead>
-
-        <tbody className="divide-y">
-          {leaves.length === 0 ? (
+    <div className="card overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="table-modern">
+          <thead>
             <tr>
-              <td colSpan={5} className="text-center py-10 text-gray-500">
-                No records found
-              </td>
+              {isAdmin && <th>Employee</th>}
+              <th>Period</th>
+              <th>Basic Salary</th>
+              <th>Net Salary</th>
+               <th className="text-center">Action</th>
             </tr>
-          ) : (
-            leaves.map((leave) => (
-              <tr key={leave._id || leave.id} className="hover:bg-gray-50">
+          </thead>
 
-                <td className="px-6 py-4 font-medium">
-                  {leave.employeeName || "John Doe"}
+          <tbody>
+            {payslips.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={isAdmin ? 5 : 4}
+                  className="text-center py-12 text-slate-500"
+                >
+                  No payslips found
                 </td>
-
-                <td className="px-6 py-4">{leave.type}</td>
-                <td className="px-6 py-4">{leave.fromDate}</td>
-                <td className="px-6 py-4">{leave.toDate}</td>
-
-                <td className="px-6 py-4">
-                  <span
-                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      leave.status === "APPROVED"
-                        ? "bg-green-100 text-green-600"
-                        : leave.status === "REJECTED"
-                        ? "bg-red-100 text-red-600"
-                        : "bg-yellow-100 text-yellow-600"
-                    }`}
-                  >
-                    {leave.status}
-                  </span>
-                </td>
-
               </tr>
-            ))
-          )}
-        </tbody>
+            ) : (
+              payslips.map((payslip) => {
+                return (
+                  <tr key={payslip._id || payslip.id}>
+                    {isAdmin && (
+                      <td className="text-slate-900">
+                        {payslip.employee?.firstName}{" "}
+                        {payslip.employee?.lastName}
+                      </td>
+                    )}
 
-      </table>
+                    {/* Type */}
+                    <td className='text-slate-500'>
+                      {format(new Date(payslip.year,payslip.month - 1),"MMMM yyyy")}
+                    </td>
+
+                    {/* Dates */}
+                    <td className="text-slate-500">
+  ${payslip.basicSalary?.toLocaleString()}
+</td>
+
+<td className="font-medium text-slate-800">
+  ${payslip.netSalary?.toLocaleString()}
+</td>
+
+                    {/* Reason */}
+                    <td className="text-centre" >
+                    <button
+    onClick={() =>
+      window.open(`/print/payslips/${payslip._id || payslip.id}`)
+    }
+    className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors ring-1 ring-blue-600/10"
+  >
+    <Download className="w-3 h-3 mr-1.5" />
+    Download
+  </button>
+                    </td>
+
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
+  );
+};
 
-  </div>
-  )
-}
+
 
 export default PayslipList

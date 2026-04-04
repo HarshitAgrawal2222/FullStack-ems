@@ -17,7 +17,7 @@ const Leave = () => {
   const [showModal, setShowModal] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
 
-  const isAdmin = false; // change later
+  const isAdmin = true; // change later
 
   const fetchLeaves = useCallback(() => {
     setLeaves(dummyLeaveData);
