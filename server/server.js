@@ -11,6 +11,8 @@ import attendaceRouter from "./routes/attendanceRoute.js";
 import leaveRouter from "./routes/leaveRoute.js";
 import payslipRouter from "./routes/payslipRoute.js";
 import dashboardRouter from "./routes/dashboardRouter.js";
+import { serve } from "inngest/express";
+import { inngest, functions } from "./inngest/index.js";
 
 
 const app = express();
@@ -32,6 +34,7 @@ app.use("/api/attendance",attendaceRouter)
 app.use("/api/leave",leaveRouter)
 app.use("/api/payslips",payslipRouter)
 app.use("/api/dashboard",dashboardRouter)
+app.use("/api/inngest", serve({ client: inngest, functions }));
 
 await connectDB()
 // Start server
