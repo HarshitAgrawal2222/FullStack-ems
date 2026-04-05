@@ -8,6 +8,8 @@ import employeesRouter from "./routes/employeeRoutes.js";
 import { profile } from "console";
 import profileRouter from "./routes/profileRoutes.js";
 import attendaceRouter from "./routes/attendanceRoute.js";
+import leaveRouter from "./routes/leaveRoute.js";
+import payslipRouter from "./routes/payslipRoute.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -25,6 +27,8 @@ app.use("/api/auth",authRouter)
 app.use("/api/employees",employeesRouter)
 app.use("/api/profile",profileRouter)
 app.use("/api/attendance",attendaceRouter)
+app.use("/api/leave",leaveRouter)
+app.use("/api/payslips",payslipRouter)
 
 
 await connectDB()
