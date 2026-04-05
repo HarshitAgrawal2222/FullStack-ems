@@ -1,7 +1,7 @@
 import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
-import { DEPARTMENTS } from "../../client/src/assets/assets";
+import { DEPARTMENTS } from "../constants/departments.js";
 
 // Dashboard Controller
 
