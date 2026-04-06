@@ -6,6 +6,8 @@ import {
   FileText,
   CalendarDays,
 } from "lucide-react";
+import toast from "react-hot-toast";
+import api from "../../api/axios";
 
 const ApplyLeaveModal = ({ onClose,open,onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -13,14 +15,22 @@ const ApplyLeaveModal = ({ onClose,open,onSuccess }) => {
 
   const minDate = new Date().toISOString().split("T")[0];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
-    setTimeout(() => {
-      setLoading(false);
+  
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+  
+    try {
+      await api.post('/leaves', data); // ✅ FIX endpoint
+      onSuccess();
       onClose();
-    }, 1000);
+    } catch (err) {
+      toast.error(err.response?.data?.error || err?.message);
+    } finally {
+      setLoading(false); // ✅ FIX loading
+    }
   };
 
   return (

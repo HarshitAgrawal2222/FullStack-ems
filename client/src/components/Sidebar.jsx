@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { dummyProfileData } from "../assets/assets";
+import { useAuth } from "../context/AuthContext";
+import api from "../api/axios";
 import { Calendar, DollarSignIcon, FileText, LayoutGrid, LogOutIcon, Menu, SettingsIcon, User, X } from "lucide-react";
 
 const Sidebar = () => {
@@ -8,17 +10,21 @@ const Sidebar = () => {
   const [userName, setUserName] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  useEffect(() => {
-    setUserName(
-      dummyProfileData.firstName + " " + dummyProfileData.lastName
-    );
-  }, []);
+  const { user, loading, logout } = useAuth();
 
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+useEffect(() => {
+  api.get("/profile").then(({ data }) => {
+    if (data.firstName)
+      setUserName(`${data.firstName} ${data.lastName || ""}`.trim());
+  });
+}, []);
 
-  const role =  "EMPLOYEE";
+// Close mobile sidebar on route change
+useEffect(() => {
+  setMobileOpen(false);
+}, [pathname]);
+
+const role = user?.role;
 
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutGrid },
@@ -34,6 +40,7 @@ const Sidebar = () => {
   ];
 
   const handleLogout = ()=>{
+    logout()
     window.location.href = "/login"
   }
 
@@ -88,7 +95,10 @@ const Sidebar = () => {
 
       {/* Navigation List */}
       <div className="flex-1 px-3 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {loading? (
+          <div className='px-3 py-3 flex items-center gap-2 text-slate-500'> <Loader2 className="animate-spin w-4 h-4" />
+      <span className="text-sm">Loading...</span></div>
+        ): ( navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
 
           return (
@@ -119,7 +129,8 @@ const Sidebar = () => {
               <span className="truncate">{item.name}</span>
             </Link>
           );
-        })}
+        }))}
+       
       </div>
      {/* Logout */}
 <div className="p-3 border-t border-white/6">

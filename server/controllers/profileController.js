@@ -4,31 +4,34 @@ import Employee from "../models/Employee.js";
 // ================= GET PROFILE =================
 // GET /api/profile
 export const getProfile = async (req, res) => {
-  try {
-    const session = req.session;
-
-    const employee = await Employee.findOne({
-      userId: session.userId
-    });
-
-    if (!employee) {
-      // Authenticated user is not an employee → return admin profile
-      return res.json({
-        firstName: "Admin",
-        lastName: "",
-        email: session.email
+    try {
+      console.log("REQ.USER:", req.user); // 🔥 DEBUG
+  
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+  
+      const employee = await Employee.findOne({
+        userId: req.user.userId
+      });
+  
+      if (!employee) {
+        return res.json({
+          firstName: "Admin",
+          lastName: "",
+          email: req.user.email
+        });
+      }
+  
+      return res.json(employee);
+  
+    } catch (error) {
+      console.error("PROFILE ERROR:", error); // 🔥 IMPORTANT
+      return res.status(500).json({
+        error: "Failed to fetch profile"
       });
     }
-
-    return res.json(employee);
-
-  } catch (error) {
-    return res.status(500).json({
-      error: "Failed to fetch profile"
-    });
-  }
-};
-
+  };
 
 
 // ================= UPDATE PROFILE =================

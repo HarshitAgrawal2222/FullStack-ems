@@ -1,9 +1,24 @@
 import { Router } from "express";
-import { getDashboardData } from "../controllers/dashboardController.js";
 import { protect } from "../middleware/auth.js";
+import Employee from "../models/Employee.js";
 
-const dashboardRouter = Router();
+const router = Router();
 
-dashboardRouter.get("/", protect, getDashboardData);
+router.get("/", protect, async (req, res) => {
+  try {
+    const totalEmployees = await Employee.countDocuments();
+    const departments = await Employee.distinct("department");
 
-export default dashboardRouter;
+    res.json({
+      role: req.user.role || "EMPLOYEE",
+      totalEmployees,
+      departments: departments.length,
+      attendance: 0,
+      pendingLeaves: 0,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+export default router; 

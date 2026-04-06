@@ -8,6 +8,21 @@ const ProfileForm = ({ initialData, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+    setMessage("");
+  
+    const formData = new FormData(e.currentTarget);
+  
+    try {
+      await api.post("/profile", formData);
+      setMessage("Profile updated successfully");
+      onSuccess?.();
+    } catch (err) {
+      setError(err.response?.data?.error || err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

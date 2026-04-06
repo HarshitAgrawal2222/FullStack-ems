@@ -3,6 +3,11 @@ import { dummyPayslipData, dummyEmployeeData } from "../assets/assets";
 import Loading from "../components/Loading";
 import PayslipList from "../components/payslip/PayslipList";
 import GeneratePayslipForm from "../components/payslip/GeneratePayslipForm";
+import { useAuth } from "../context/AuthContext";
+
+
+import api from "../api/axios";              // ✅ added
+import toast from "react-hot-toast";        // ✅ added
 
 const Payslips = () => {
 
@@ -10,14 +15,19 @@ const Payslips = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const isAdmin = true;
+  const { user } = useAuth();               // ✅ FIXED
+
+  const isAdmin = user?.role === "ADMIN";
 
   const fetchPayslips = useCallback(async () => {
-    setPayslips(dummyPayslipData);
-
-    setTimeout(() => {
+    try {
+      const res = await api.get("/payslips");
+      setPayslips(res.data.data || []);
+    } catch (error) {
+      toast.error(error?.response?.data?.error || error?.message);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   }, []);
 
   useEffect(() => {
@@ -25,7 +35,20 @@ const Payslips = () => {
   }, [fetchPayslips]);
 
   useEffect(() => {
-    if (isAdmin) setEmployees(dummyEmployeeData);
+    if (isAdmin) {
+      api
+        .get("/employees")
+        .then((res) =>
+          setEmployees(
+            (res.data.data || res.data.employees || []).filter(
+              (e) => !e.isDeleted
+            )
+          )
+        )
+        .catch((err) => {
+          console.log("EMPLOYEE ERROR:", err);
+        });
+    }
   }, [isAdmin]);
 
   if (loading) return <Loading />;
@@ -34,19 +57,25 @@ const Payslips = () => {
     <div className="animate-fade-in">
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-       <div>
-        <h1 className="page-title">Payslips</h1>
+        <div>
+          <h1 className="page-title">Payslips</h1>
 
-        <p className="page-subtitle">
-          {isAdmin
-            ? "Generate and manage employee payslips"
-            : "Your payslip history"}
-        </p>
+          <p className="page-subtitle">
+            {isAdmin
+              ? "Generate and manage employee payslips"
+              : "Your payslip history"}
+          </p>
+        </div>
+
+        {isAdmin && (
+          <GeneratePayslipForm
+            employees={employees}
+            onSuccess={fetchPayslips}
+          />
+        )}
       </div>
 
-      {isAdmin && <GeneratePayslipForm employees={employees} onSuccess={fetchPayslips}/>}
-      </div>
-     <PayslipList payslips={payslips} isAdmin={isAdmin}/>
+      <PayslipList payslips={payslips} isAdmin={isAdmin} />
 
     </div>
   );

@@ -50,8 +50,7 @@ const LeaveHistory = ({ leaves, isAdmin, onUpdate }) => {
                   <tr key={leave._id || leave.id}>
                     {isAdmin && (
                       <td className="text-slate-900">
-                        {leave.employee?.firstName}{" "}
-                        {leave.employee?.lastName}
+                        {leave.employeeId?.userId?.name || "N/A"}
                       </td>
                     )}
 
@@ -91,11 +90,11 @@ const LeaveHistory = ({ leaves, isAdmin, onUpdate }) => {
                     {/* Admin Actions */}
                     {isAdmin && (
                       <td>
-                        {leave.status === "PENDING" && (
+                       {leave.status?.toUpperCase() === "PENDING" && (
                           <div className="flex justify-center gap-2">
                             {/* Approve */}
                             <button
-                              disabled={!!processing}
+                            disabled={processing === (leave._id || leave.id)}
                               onClick={() =>
                                 handleStatusUpdate(
                                   leave._id || leave.id,
@@ -113,7 +112,7 @@ const LeaveHistory = ({ leaves, isAdmin, onUpdate }) => {
 
                             {/* Reject */}
                             <button
-                              disabled={!!processing}
+                             disabled={processing === (leave._id || leave.id)}
                               onClick={() =>
                                 handleStatusUpdate(
                                   leave._id || leave.id,

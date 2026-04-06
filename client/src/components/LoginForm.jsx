@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import LoginLeftSide from "./LoginLeftSide";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 const LoginForm = ({ role, title, subtitle }) => {
   const navigate = useNavigate(); // ✅ added
@@ -10,15 +12,23 @@ const LoginForm = ({ role, title, subtitle }) => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading,setLoading] = useState(false);
+  const {login} = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // ✅ minimal role-based redirect
-    if (role === "admin") {
+    setError("");
+    setLoading(true);
+  
+    try {
+      await login(email, password, role);
       navigate("/dashboard");
-    } else {
-      navigate("/employees");
+    } catch (error) {
+      toast.error(
+        error.response?.data?.error || error.message || "Login failed"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 

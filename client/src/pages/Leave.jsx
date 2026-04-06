@@ -3,6 +3,8 @@ import { dummyLeaveData } from "../assets/assets";
 import Loading from "../components/Loading";
 import LeaveHistory from "../components/leave/LeaveHistory";
 import ApplyLeaveModal from "../components/leave/ApplyLeaveModel"; 
+import toast from "react-hot-toast";
+import api from "../api/axios";
 
 import {
   ThermometerIcon,
@@ -10,22 +12,42 @@ import {
   PalmtreeIcon,
   PlusIcon,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const Leave = () => {
+  const { user } = useAuth();
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isDeleted, setIsDeleted] = useState(false);
 
-  const isAdmin = true; // change later
+  const isAdmin = user?.role === "ADMIN";
 
-  const fetchLeaves = useCallback(() => {
-    setLeaves(dummyLeaveData);
-
-    setTimeout(() => {
+  const fetchLeaves = useCallback(async () => {
+    try {
+      const res = await api.get("/leaves");
+      setLeaves(res.data.data || []);
+      if (res.data.employee?.isDeleted) setIsDeleted(true);
+    } catch (error) {
+      toast.error(error?.response?.data?.error || error.message);
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
+    }
+  }, [user]);
+
+  // ✅ NEW: handle update (MIN CHANGE)
+  const handleUpdate = async (id, status) => {
+    try {
+      await api.patch(`/leaves/${id}`, { status });
+
+      toast.success(`Leave ${status.toLowerCase()}`);
+
+      // refresh data
+      fetchLeaves();
+    } catch (error) {
+      toast.error(error?.response?.data?.error || "Update failed");
+    }
+  };
 
   useEffect(() => {
     fetchLeaves();
@@ -102,18 +124,20 @@ const Leave = () => {
           ))}
         </div>
       )}
-<LeaveHistory 
-  leaves={leaves} 
-  isAdmin={isAdmin} 
-  onUpdate={fetchLeaves}
-/>
 
-<ApplyLeaveModal 
-  open={showModal} 
-  onClose={() => setShowModal(false)} 
-  onSuccess={fetchLeaves}
-/>
-</div>
+      {/* ✅ FIXED: pass handleUpdate instead of fetchLeaves */}
+      <LeaveHistory 
+        leaves={leaves} 
+        isAdmin={isAdmin} 
+        onUpdate={handleUpdate}
+      />
+
+      <ApplyLeaveModal 
+        open={showModal} 
+        onClose={() => setShowModal(false)} 
+        onSuccess={fetchLeaves}
+      />
+    </div>
   );
 };
 

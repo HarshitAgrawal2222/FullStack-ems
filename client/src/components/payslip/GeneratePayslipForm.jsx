@@ -1,10 +1,12 @@
-import { Plus ,X} from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useState } from "react";
+import { Plus, X, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
+import api from "../../api/axios";
 
-const GeneratePayslipForm = ({ employees, onSuccess }) => {
+const GeneratePayslipForm = ({ employees = [], onSuccess }) => {
 
-  const [isOpen, setIsOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   if (!isOpen) return (
     <button
@@ -13,11 +15,37 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
     >
       <Plus className="w-4 h-4" /> Generate Payslip
     </button>
-  )
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  }
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const raw = Object.fromEntries(formData.entries());
+
+    // ✅ FIX 1: convert to proper types
+    const data = {
+      employeeId: raw.employeeId,
+      month: Number(raw.month),
+      year: Number(raw.year),
+      basicSalary: Number(raw.basicSalary),
+      allowances: Number(raw.allowances || 0),
+      deductions: Number(raw.deductions || 0),
+    };
+
+    try {
+      await api.post("/payslips", data);
+      toast.success("Payslip generated");   // ✅ optional improvement
+      setIsOpen(false);
+      onSuccess();
+    } catch (err) {
+      console.log("ERROR:", err.response?.data); // ✅ debug
+      toast.error(err.response?.data?.error || err?.message);
+    } finally {
+      setLoading(false); // ✅ FIX 2 (important)
+    }
+  };
 
   return (
     <div className='fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4'>
@@ -36,127 +64,129 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
             <X size={20} />
           </button>
         </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
 
-  {/* select employee */}
-  <div>
-    <label className="block text-sm font-medium text-slate-700 mb-2">
-      Employee
-    </label>
+          {/* Employee */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Employee
+            </label>
 
-    <select name="employeeId" required>
-      {employees.map((e) => (
-        <option key={e.id} value={e.id}>
-          {e.firstName} {e.lastName} ({e.position})
-        </option>
-      ))}
-    </select>
-  </div>
+            {/* ✅ FIX 3: defaultValue required */}
+            <select name="employeeId" required defaultValue="">
+              <option value="" disabled>Select employee</option>
 
-  {/* select month & year */}
-  <div className="grid grid-cols-2 gap-4">
+              {employees.map((e) => (
+                <option key={e._id} value={e._id}>
+                  {e.firstName} {e.lastName} ({e.position})
+                </option>
+              ))}
+            </select>
+          </div>
 
-    <div>
-      <label className="block text-sm font-medium text-slate-700 mb-2">
-        Month
-      </label>
+          {/* Month & Year */}
+          <div className="grid grid-cols-2 gap-4">
 
-      <select name="month">
-        {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-          <option key={m} value={m}>
-            {m}
-          </option>
-        ))}
-      </select>
-    </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Month
+              </label>
 
-    <div>
-      <label className="block text-sm font-medium text-slate-700 mb-2">
-        Year
-      </label>
+              <select name="month">
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-      <input
-        type="number"
-        name="year"
-        defaultValue={new Date().getFullYear()}
-      />
-    </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Year
+              </label>
 
-  </div>
+              <input
+                type="number"
+                name="year"
+                defaultValue={new Date().getFullYear()}
+              />
+            </div>
 
-  {/* Basic Salary */}
-  <div>
-    <label className="block text-sm font-medium text-slate-700 mb-2">
-      Basic Salary
-    </label>
+          </div>
 
-    <input
-      type="number"
-      name="basicSalary"
-      required
-      placeholder="5000"
-    />
-  </div>
+          {/* Basic Salary */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Basic Salary
+            </label>
 
-  {/* Allowances & Deductions */}
-  <div className="grid grid-cols-2 gap-4">
+            <input
+              type="number"
+              name="basicSalary"
+              required
+              placeholder="5000"
+            />
+          </div>
 
-    <div>
-      <label className="block text-sm font-medium text-slate-700 mb-2">
-        Allowances
-      </label>
+          {/* Allowances & Deductions */}
+          <div className="grid grid-cols-2 gap-4">
 
-      <input
-        type="number"
-        name="allowances"
-        defaultValue="0"
-      />
-    </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Allowances
+              </label>
 
-    <div>
-      <label className="block text-sm font-medium text-slate-700 mb-2">
-        Deductions
-      </label>
+              <input
+                type="number"
+                name="allowances"
+                defaultValue="0"
+              />
+            </div>
 
-      <input
-        type="number"
-        name="deductions"
-        defaultValue="0"
-      />
-    </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Deductions
+              </label>
 
-  </div>
+              <input
+                type="number"
+                name="deductions"
+                defaultValue="0"
+              />
+            </div>
 
-  {/* buttons */}
-  <div className="flex justify-end gap-3 pt-2">
+          </div>
 
-    <button
-      onClick={() => setIsOpen(false)}
-      type="button"
-      className="btn-secondary"
-    >
-      Cancel
-    </button>
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 pt-2">
 
-    <button
-      disabled={loading}
-      type="submit"
-      className="btn-primary flex items-center"
-    >
-      {loading && (
-        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-      )}
-      Generate
-    </button>
+            <button
+              onClick={() => setIsOpen(false)}
+              type="button"
+              className="btn-secondary"
+            >
+              Cancel
+            </button>
 
-  </div>
+            <button
+              disabled={loading}
+              type="submit"
+              className="btn-primary flex items-center"
+            >
+              {loading && (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              )}
+              Generate
+            </button>
 
-</form>
-  
+          </div>
+
+        </form>
       </div>
-  
     </div>
-  )
-}
+  );
+};
 
-export default GeneratePayslipForm
+export default GeneratePayslipForm;

@@ -2,15 +2,12 @@ import { inngest } from "../inngest/index.js";
 import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 
-
 // ================= CLOCK IN / OUT =================
 // POST /api/attendance
 export const clockInOut = async (req, res) => {
   try {
-    const session = req.session;
-
     const employee = await Employee.findOne({
-      userId: session.userId
+      userId: req.user.userId   // ✅ FIXED
     });
 
     if (!employee) {
@@ -35,8 +32,7 @@ export const clockInOut = async (req, res) => {
 
     // ================= CLOCK IN =================
     if (!existing) {
-      const isLate =
-        now.getHours() >= 9 && now.getMinutes() > 0;
+      const isLate = now.getHours() >= 9 && now.getMinutes() > 0;
 
       const attendance = await Attendance.create({
         employeeId: employee._id,
@@ -45,13 +41,14 @@ export const clockInOut = async (req, res) => {
         status: isLate ? "LATE" : "PRESENT"
       });
 
+      // ✅ keep inngest (optional but good)
       await inngest.send({
-        name:"employee/check-out",
-        data:{
-            employeeId:employee._id,
-            attendanceId:attendance._id,
+        name: "employee/check-out",
+        data: {
+          employeeId: employee._id,
+          attendanceId: attendance._id,
         }
-      })
+      });
 
       return res.json({
         success: true,
@@ -62,24 +59,17 @@ export const clockInOut = async (req, res) => {
 
     // ================= CLOCK OUT =================
     else if (!existing.checkOut) {
-
       const checkInTime = new Date(existing.checkIn).getTime();
       const diffMs = now.getTime() - checkInTime;
-      const diffHours = diffMs / (1000 * 60 * 60);
+      const workingHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
 
       existing.checkOut = now;
-
-      // Compute working hours
-      const workingHours = parseFloat(diffHours.toFixed(2));
-      let dayType = "Half Day";
-
-      if (workingHours >= 8) dayType = "Full Day";
-      else if (workingHours >= 6) dayType = "Three Quarter Day";
-      else if (workingHours >= 4) dayType = "Half Day";
-      else dayType = "Short Day";
-
       existing.workingHours = workingHours;
-      existing.dayType = dayType;
+
+      if (workingHours >= 8) existing.dayType = "Full Day";
+      else if (workingHours >= 6) existing.dayType = "Three Quarter Day";
+      else if (workingHours >= 4) existing.dayType = "Half Day";
+      else existing.dayType = "Short Day";
 
       await existing.save();
 
@@ -105,39 +95,40 @@ export const clockInOut = async (req, res) => {
       error: "Operation failed"
     });
   }
-
-  
 };
 
 // ================= GET ATTENDANCE =================
 // GET /api/attendance
 export const getAttendance = async (req, res) => {
-    try {
-      const session = req.session;
-  
-      const employee = await Employee.findOne({
-        userId: session.userId
-      });
-  
-      if (!employee) {
-        return res.status(404).json({
-          error: "Employee not found"
-        });
-      }
-  
-      const limit = parseInt(req.query.limit || 30);
-  
-      const history = await Attendance.find({
-        employeeId: employee._id
-      })
-        .sort({ date: -1 })
-        .limit(limit);
-  
-      return res.json(history);
-  
-    } catch (error) {
-      return res.status(500).json({
-        error: "Failed to fetch attendance"
+  try {
+    const employee = await Employee.findOne({
+      userId: req.user.userId   // ✅ FIXED
+    });
+
+    if (!employee) {
+      return res.status(404).json({
+        error: "Employee not found"
       });
     }
-  };
+
+    const limit = parseInt(req.query.limit || 30);
+
+    const history = await Attendance.find({
+      employeeId: employee._id
+    })
+      .sort({ date: -1 })
+      .limit(limit);
+
+    // ✅ FIXED RESPONSE FORMAT
+    return res.json({
+      success: true,
+      data: history
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      error: "Failed to fetch attendance"
+    });
+  }
+};

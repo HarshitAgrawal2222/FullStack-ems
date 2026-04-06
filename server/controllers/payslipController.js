@@ -1,5 +1,4 @@
 
-// Create payslip
 
 import Employee from "../models/Employee.js";
 import Payslip from "../models/Payslip.js";
@@ -50,39 +49,54 @@ export const createPayslip = async (req, res) => {
   };
 
   // Get payslip
-// GET /api/payslips
-export const getPayslips = async(req,res) =>{
+  export const getPayslips = async (req, res) => {
     try {
-        const session = req.session;
-        const isAdmin = session.role === "ADMIN";
-        if(isAdmin){
-            const payslips = await Payslip.find().populate
-            ("employeeId").sort({createdAt:-1})
-            const data = payslips.map((p)=>{
-                const obj = p.toObject();
-                return{
-                    ...obj,
-                    id: obj._id.toString(),
-                    employee:obj.employeeId,
-                    employeeId: obj.employeeId?._id?.toString(),
-                }
-            })
-            return res.json({data});
-        }else{
-            const employee = await Employee.findOne({userId:session.userId})
-            if(!employee) return res.status(404).json({error:"Not found"})
-                const payslips = await Payslip.find({ employeeId: employee._id })
-    .sort({ createdAt: -1 });
-
-  return res.json({ payslips });
+      const user = req.user; // ✅ FIX
+  
+      if (!user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+  
+      const isAdmin = user.role === "ADMIN"; // ✅ FIX
+  
+      if (isAdmin) {
+        const payslips = await Payslip.find()
+          .populate("employeeId")
+          .sort({ createdAt: -1 });
+  
+        const data = payslips.map((p) => {
+          const obj = p.toObject();
+          return {
+            ...obj,
+            id: obj._id.toString(),
+            employee: obj.employeeId,
+            employeeId: obj.employeeId?._id?.toString(),
+          };
+        });
+  
+        return res.json({ data });
+      } else {
+        const employee = await Employee.findOne({
+          userId: user._id, // ✅ FIX (NOT session.userId)
+        });
+  
+        if (!employee) {
+          return res.status(404).json({ error: "Employee not found" });
         }
-
+  
+        const payslips = await Payslip.find({
+          employeeId: employee._id,
+        }).sort({ createdAt: -1 });
+  
+        return res.json({ data: payslips });
+      }
     } catch (error) {
-        return res.status(500).json({
-            error: "Failed"
-          });
+      console.error("GET PAYSLIPS ERROR:", error);
+      return res.status(500).json({
+        error: "Failed",
+      });
     }
-}
+  };
 
 // Get payslip by ID
 // GET /api/payslips/:id

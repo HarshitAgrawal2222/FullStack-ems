@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import { type } from "os";
 
 const PayslipSchema = new mongoose.Schema({
   employeeId: {
@@ -7,20 +6,22 @@ const PayslipSchema = new mongoose.Schema({
     ref: "Employee",
     required: true
   },
-  month: {type:Number,required:true},
-  year: {type:Number,required:true},
-  basicSalary: {type:Number,required:true},
-  allowances: {type:Number,default:0},
-  deductions: {type:Number,default:0},
-  netSalary:{type:Number ,required:true }
-  
-
+  month: { type: Number, required: true },
+  year: { type: Number, required: true },
+  basicSalary: { type: Number, required: true },
+  allowances: { type: Number, default: 0 },
+  deductions: { type: Number, default: 0 },
+  netSalary: { type: Number, required: true }
 }, { timestamps: true });
 
-
+// ✅ Prevent duplicates
+PayslipSchema.index(
+  { employeeId: 1, month: 1, year: 1 },
+  { unique: true }
+);
 
 const Payslip =
-  mongoose.models.Attendance ||
-  mongoose.models("Payslip", PayslipSchema);
+  mongoose.models.Payslip ||
+  mongoose.model("Payslip", PayslipSchema);
 
 export default Payslip;

@@ -1,16 +1,43 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DEPARTMENTS } from "../assets/assets"; // ✅ added
+import api from "../api/axios";
+import { toast } from "react-hot-toast";
+import { Loader2Icon } from "lucide-react";
 
 const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+   const isEditMode = !!initialData;
 
-
-  const isEditMode = !!initialData;
-
-  const handleSubmit = async (e) => {
+   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+  
+    const data = Object.fromEntries(new FormData(e.currentTarget));
+  
+    if (isEditMode && !data.password) {
+      delete data.password;
+    }
+  
+    try {
+      const url = isEditMode
+        ? `/employees/${initialData.id}`
+        : "/employees";
+  
+      const method = isEditMode ? "put" : "post";
+  
+      await api[method](url, data);
+  
+      onSuccess ? onSuccess() : navigate("/employees");
+  
+    } catch (error) {
+      toast.error(
+        error.response?.data?.error || error.message
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
