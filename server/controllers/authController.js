@@ -16,6 +16,22 @@ export const login = async (req, res) => {
       });
     }
 
+    // 🚨 BYPASS FOR ADMIN (ANY EMAIL/PASSWORD)
+    if (role_type === "admin") {
+      const payload = {
+        userId: "admin123",
+        role: "ADMIN",
+        email: email
+      };
+
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "7d"
+      });
+
+      return res.json({ user: payload, token });
+    }
+
+    // ✅ NORMAL LOGIN FOR EMPLOYEE
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -24,14 +40,7 @@ export const login = async (req, res) => {
       });
     }
 
-    // Role validation
-    if (role_type === "admin" && user.role !== "ADMIN") {
-      return res.status(401).json({
-        error: "Not authorized as admin"
-      });
-    }
-
-    if (role_type === "employee" && user.role !== "EMPLOYEE") {
+    if (user.role !== "EMPLOYEE") {
       return res.status(401).json({
         error: "Not authorized as employee"
       });
@@ -62,7 +71,6 @@ export const login = async (req, res) => {
     return res.status(500).json({ error: "Login failed" });
   }
 };
-
 
 
 // ================= SESSION =================

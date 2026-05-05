@@ -76,7 +76,7 @@ const LoginForm = ({ role, title, subtitle }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="john@example.com"
+                placeholder="admin@example.com"
                 className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"
               />
             </div>
@@ -92,7 +92,7 @@ const LoginForm = ({ role, title, subtitle }) => {
                   type={showPassword ? "text" : "password"}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  placeholder="••••••••"
+                  placeholder="admin123"
                   className="w-full px-4 py-2 pr-10 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"
                 />
 
